@@ -1,0 +1,25 @@
+{% extends "layout.html" %} 
+
+{% block heading %} UNSUCCESS {% endblock %} 
+
+{% block body %}
+
+{% if login %}
+<p>Could not be logged in</p>
+
+{% else %}
+<p>Could not be registered</p>
+
+{% endif %}
+
+<ul>
+  <li>
+    <a href="{{url_for('index')}}">Login</a>
+  </li>
+  <li>
+    <a href="{{url_for('register')}}">Register</a>
+  </li>
+</ul>
+
+
+{% endblock %}

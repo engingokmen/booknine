@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>BookNine</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    </head>
+    <body style="background-color: var(--main-bg-color);">
+      <div style="height:100vh" class="container">
+        <div class="d-flex justify-content-between align-items-center p-3">
+          <h2>
+            {% block heading %}
+            {% endblock %}
+          </h2>
+  
+          <div>
+              {% if username %}
+                <span class="mr-1">Hi, {{username}} </span>
+                <a class = "btn btn-dark btn-sm" href="/logout">Logout</a>
+              {% endif %}   
+          </div>
+        </div>
+        {% block body %}
+        {% endblock %}
+      </div>
+    </body>
+</html>
