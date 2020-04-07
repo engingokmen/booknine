@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, session, render_template, request, redirect, url_for
+from flask import Flask, session, render_template, request, redirect, url_for, jsonify
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -89,7 +89,7 @@ def login():
 @app.route("/book-search", methods=["GET"])
 def book_search():
     if session['logged_in'] == True:
-        return render_template("book-search.html")
+        return render_template("book-search.html", username=session["username"])
     else:
         return redirect(url_for('index'))
 
@@ -97,8 +97,21 @@ def book_search():
 @app.route("/book-search/search-results", methods=["POST"])
 def search_results():
     if session['logged_in'] == True:
-        search_query = request.form.get("query")
-        print(search_query)
-        search_results = db.execute("SELECT * FROM books WHERE title = :title",
-                                    {"title": search_query})
-        return search_results
+        title = request.form.get("title")
+        author = request.form.get("author")
+        isbn = request.form.get("isbn")
+
+        search_results = db.execute("SELECT * FROM books WHERE title = :title OR author = :author OR isbn = :isbn",
+                                    {"title": title, "author": author, "isbn": isbn}).fetchone()
+        print(search_results)
+        if search_results is None:
+            return jsonify({"error": "no such a book"}), 422
+
+        return jsonify({
+            "isbn": search_results.isbn,
+            "title": search_results.title,
+            "author": search_results.author,
+            "year": search_results.year
+        })
+    else:
+        return redirect(url_for('index'))
