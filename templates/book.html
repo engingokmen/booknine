@@ -1,0 +1,16 @@
+{% extends "layout.html" %} 
+
+{% block heading %} 
+  BOOK SEARCH 
+  <div>
+    {% if username %}
+      <span class="mr-1">Hi, {{username}} </span>
+      <a class = "btn btn-dark btn-sm" href="/logout">Logout</a>
+    {% endif %}   
+  </div>
+{% endblock %} 
+
+{% block body %}
+ <h2>BOOK DETAIL</h2>
+
+{% endblock %}

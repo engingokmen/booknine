@@ -1,6 +1,16 @@
 {% extends "layout.html" %} 
 
-{% block heading %} LOGIN {% endblock %} 
+{% block heading %} 
+  LOGIN
+  <div>
+    {% if username != '' %}
+      <span class="mr-1">Hi, {{username}} </span>
+      <a class = "btn btn-dark btn-sm" href="/logout">Logout</a>
+    {% else %}
+
+    {% endif %} 
+  </div> 
+{% endblock %} 
 
 {% block body %}
 

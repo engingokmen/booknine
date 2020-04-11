@@ -1,3 +1,7 @@
 :root {
   --main-bg-color: rgb(255, 243, 230);
 }
+
+.link:hover {
+  text-decoration: none;
+}
