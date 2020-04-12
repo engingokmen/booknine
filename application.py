@@ -89,59 +89,94 @@ def login():
         return redirect(url_for('index'))
 
 
+def query_total_result(column, query):
+    if column == "title":
+        total_result = db.execute(
+            "SELECT * FROM books WHERE LOWER(title) LIKE (LOWER(:query) || '%')", {"query": query}).rowcount
+        return total_result
+    if column == "author":
+        total_result = db.execute(
+            "SELECT * FROM books WHERE LOWER(author) LIKE (LOWER(:query) || '%')", {"query": query}).rowcount
+        return total_result
+    if column == "isbn":
+        total_result = db.execute(
+            "SELECT * FROM books WHERE LOWER(isbn) LIKE (LOWER(:query) || '%')", {"query": query}).rowcount
+        return total_result
+
+
+def query_books(column, query, page, per_page):
+    if column == "title":
+        search_result = db.execute(
+            "SELECT * FROM books WHERE LOWER(title) LIKE (LOWER(:query) || '%') ORDER BY title ASC LIMIT :per_page OFFSET :offset_num", {"query": query, "per_page": per_page, "offset_num": page}).fetchall()
+        return search_result
+    if column == "author":
+        search_result = db.execute(
+            "SELECT * FROM books WHERE LOWER(author) LIKE (LOWER(:query) || '%') ORDER BY title ASC LIMIT :per_page OFFSET :offset_num", {"query": query, "per_page": per_page, "offset_num": page}).fetchall()
+        return search_result
+    if column == "isbn":
+        search_result = db.execute(
+            "SELECT * FROM books WHERE LOWER(isbn) LIKE (LOWER(:query) || '%') ORDER BY title ASC LIMIT :per_page OFFSET :offset_num", {"query": query, "per_page": per_page, "offset_num": page}).fetchall()
+        return search_result
+
+
 @app.route("/book-search", methods=["GET", "POST"])
-def book_search(page):
+def book_search():
     if request.method == 'GET':
         if session['logged_in'] == True:
+            total_pages = 1
             # fetch 20 books
             books_initial = db.execute(
                 "SELECT * FROM books ORDER BY title ASC LIMIT 20").fetchall()
-            return render_template("book-search.html", username=session.get("username"), books=books_initial)
+            return render_template("book-search.html", username=session.get("username"), books=books_initial, total_pages=total_pages)
         else:
             return redirect(url_for('index'))
     else:
         if session['logged_in'] == True:
-            total_result = 0
-            per_page = 20
-            total_pages = 0
-            page = page
+            page = 1
             try:
-                title = request.form.get("title")
+                query = request.form.get("title")
                 author = request.form.get("author")
                 isbn = request.form.get("isbn")
             except ValueError:
                 return render_template("error.html", message="Invalid search criteria")
-            if title != None:
-                total_result = db.execute(
-                    "SELECT * FROM books WHERE LOWER(title) LIKE (LOWER(:title) || '%')", {"title": title}).rowcount
-                total_pages = math.ceil((total_result / per_page))
-                print(total_pages)
-                search_result = db.execute(
-                    "SELECT * FROM books WHERE LOWER(title) LIKE (LOWER(:title) || '%') ORDER BY title ASC LIMIT :per_page", {"title": title, "offset_num": page, "per_page": per_page}).fetchall()
-                if len(search_result) == 0:
-                    return render_template("error.html", message="Sorry, there is no book in our inventory according to your search criteria")
-                else:
-                    return render_template("book-search.html", username=session.get("username"), books=search_result, total_pages=total_pages)
-            if author != None:
-                search_result = db.execute(
-                    "SELECT * FROM books WHERE LOWER(author) LIKE (LOWER(:author) || '%') ORDER BY title ASC LIMIT 20 OFFSET offset_num", {"author": author, "offset_num": offset_num}).fetchall()
-                if len(search_result) == 0:
-                    return render_template("error.html", message="Sorry, there is no book in our inventory according to your search criteria")
-                else:
-                    return render_template("book-search.html", username=session.get("username"), books=search_result)
-            if isbn != None:
-                print(isbn)
-                search_result = db.execute(
-                    "SELECT * FROM books WHERE LOWER(isbn) LIKE (LOWER(:isbn) || '%') ORDER BY title ASC LIMIT 20 OFFSET offset_num", {"isbn": isbn, "offset_num": offset_num}).fetchall()
-                print(search_result)
-                if len(search_result) == 0:
-                    return render_template("error.html", message="Sorry, there is no book in our inventory according to your search criteria")
-                else:
-                    return render_template("book-search.html", username=session.get("username"), books=search_result)
+        if query != None:
+            return redirect(url_for('paginate', title="title", query=query, page=page))
 
 
-@app.route("/book-search/<int:page>", methods=["GET"])
-def pagination(page, query):
+@app.route("/book-search/<title>/<query>/<int:page>")
+def paginate(title, query, page):
+    if session['logged_in'] == True:
+        print(title, query, page)
+        total_result = query_total_result("title", title)
+        total_pages = math.ceil((total_result / per_page))
+        search_result = query_books("title", title, page, per_page)
+        return render_template("unsuccess.html")
+    return render_template("unsuccess.html")
+    render_template("book-search.html", username=session.get("username"))
+
+       if len(search_result) == 0:
+            return render_template("error.html", message="Sorry, there is no book in our inventory according to your search criteria")
+        else:
+
+    render_template("book-search.html", username=session.get("username"),
+                    books=search_result, current_page=page, total_pages=total_pages)
+
+    #   if author != None:
+    #     search_result = query_books(author, author, page, per_page)
+    #     if len(search_result) == 0:
+    #         return render_template("error.html", message="Sorry, there is no book in our inventory according to your search criteria")
+    #     else:
+    #         return render_template("book-search.html", username=session.get("username"), books=search_result)
+    # if isbn != None:
+    #     search_result = query_books(author, author, page, per_page)
+    #     print(search_result)
+    #     if len(search_result) == 0:
+    #         return render_template("error.html", message="Sorry, there is no book in our inventory according to your search criteria")
+    #     else:
+    #         return render_template("book-search.html", username=session.get("username"), books=search_result)
+    # total_result = 0
+    # per_page = 20
+    # total_pages = 0
 
 
 @app.route("/book-search/<book_isbn>")

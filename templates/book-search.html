@@ -63,7 +63,14 @@
         <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
       </li>
         {% for page in range(total_pages) %}
-          <li class="page-item"><a class="page-link" href="{{url_for('book_search', page=page)}}">{{page+1}}</a></li>
+          <li class="page-item">
+            <a class="page-link" href="{{url_for('book_search', page=page)}}">
+              {{page+1}}
+              {% if page == current_page %}
+                <span class="sr-only">(current)</span>
+              {% endif %}
+            </a>
+          </li>
         {% endfor %}
       <li class="page-item">
         <a class="page-link" href="#">Next</a>
