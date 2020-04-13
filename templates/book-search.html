@@ -10,6 +10,10 @@
   </div>
 {% endblock %} 
 
+{% block breadcrumb %}
+  <li class="breadcrumb-item active" aria-current="page">Book Search</li>
+{% endblock %}
+
 {% block body %}
   <div class="d-flex justify-content-start">
     <form class="form-inline" action="/book-search" method="post">
@@ -46,36 +50,54 @@
       <tbody>      
         {% for book in books %}
             <tr>
-                <td>{{loop.index}}</td>
-                <td><a class="link" href="{{ url_for('book', book_isbn=book.isbn) }}">{{book.isbn}}</a></td>
-                <td><a class="link" href="{{ url_for('book', book_isbn=book.isbn) }}">{{book.title}}</a></td>
-                <td><a class="link" href="{{ url_for('book', book_isbn=book.isbn) }}">{{book.author}}</a></td>
-                <td><a class="link" href="{{ url_for('book', book_isbn=book.isbn) }}">{{book.year}}</a></td>
+                {% if page == 1 %}
+                    <td>{{loop.index}}</td>
+                {% else %}
+                    <td>{{page*10 + loop.index}}</td>
+                {% endif %}
+                <td><a class="link" href="{{ url_for('goto_book_page', isbn=book.isbn) }}">{{book.isbn}}</a></td>
+                <td><a class="link" href="{{ url_for('goto_book_page', isbn=book.isbn) }}">{{book.title}}</a></td>
+                <td><a class="link" href="{{ url_for('goto_book_page', isbn=book.isbn) }}">{{book.author}}</a></td>
+                <td><a class="link" href="{{ url_for('goto_book_page', isbn=book.isbn) }}">{{book.year}}</a></td>
             </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-
+  {% if query is defined %}
   <nav aria-label="Page navigation example">
-    <ul class="pagination justify-content-center">
+    <ul class="pagination justify-content-center flex-wrap">
+    {% if page == 1 %}
       <li class="page-item disabled">
         <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+    {% else %}
+      <li class="page-item">
+        <a class="page-link" href="{{url_for('paginate', column=column, page=(page-1), query=query)}}">Previous</a>
+    {% endif %}
       </li>
-        {% for page in range(total_pages) %}
+        {% for index in range(total_pages) %}
+        {% if index+1 == page %}
+          <li class="page-item active">
+        {% else %}
           <li class="page-item">
-            <a class="page-link" href="{{url_for('book_search', page=page)}}">
-              {{page+1}}
-              {% if page == current_page %}
+        {% endif %}
+            <a class="page-link" href="{{url_for('paginate', column=column, page=(index+1), query=query)}}">
+              {{index+1}}
+              {% if index+1 == page %}
                 <span class="sr-only">(current)</span>
               {% endif %}
             </a>
           </li>
         {% endfor %}
-      <li class="page-item">
-        <a class="page-link" href="#">Next</a>
+      {% if page == total_pages %}
+        <li class="page-item disabled">
+          <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
+      {% else %}
+        <li class="page-item">
+          <a class="page-link" href="{{url_for('paginate', column=column, page=(page+1), query=query)}}">Next</a>
+      {% endif %}
       </li>
     </ul>
   </nav>
-
+  {% endif %}
 {% endblock %}

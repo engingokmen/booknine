@@ -20,7 +20,7 @@ db.execute(
     "CREATE TABLE users (id SERIAL PRIMARY KEY, username VARCHAR NOT NULL, password VARCHAR NOT NULL)")
 
 db.execute(
-    "CREATE TABLE reviews (id SERIAL PRIMARY KEY, rating SMALLINT NOT NULL, comment VARCHAR(600), users_id INTEGER REFERENCES users )")
+    "CREATE TABLE reviews (id SERIAL PRIMARY KEY, rating SMALLINT NOT NULL, comment VARCHAR(600), user_id INTEGER REFERENCES users, book_id INTEGER REFERENCES books )")
 
 db.execute("CREATE TABLE books (id SERIAL PRIMARY KEY, isbn VARCHAR NOT NULL, title VARCHAR NOT NULL, author VARCHAR NOT NULL, year INTEGER, review_id INTEGER REFERENCES reviews)")
 f = open("books.csv")

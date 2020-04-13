@@ -105,83 +105,81 @@ def query_total_result(column, query):
 
 
 def query_books(column, query, page, per_page):
+    offset_num = (page-1) * per_page
     if column == "title":
         search_result = db.execute(
-            "SELECT * FROM books WHERE LOWER(title) LIKE (LOWER(:query) || '%') ORDER BY title ASC LIMIT :per_page OFFSET :offset_num", {"query": query, "per_page": per_page, "offset_num": page}).fetchall()
+            "SELECT * FROM books WHERE LOWER(title) LIKE (LOWER(:query) || '%') ORDER BY title ASC LIMIT :per_page OFFSET :offset_num", {"query": query, "per_page": per_page, "offset_num": offset_num}).fetchall()
         return search_result
     if column == "author":
         search_result = db.execute(
-            "SELECT * FROM books WHERE LOWER(author) LIKE (LOWER(:query) || '%') ORDER BY title ASC LIMIT :per_page OFFSET :offset_num", {"query": query, "per_page": per_page, "offset_num": page}).fetchall()
+            "SELECT * FROM books WHERE LOWER(author) LIKE (LOWER(:query) || '%') ORDER BY title ASC LIMIT :per_page OFFSET :offset_num", {"query": query, "per_page": per_page, "offset_num": offset_num}).fetchall()
         return search_result
     if column == "isbn":
         search_result = db.execute(
-            "SELECT * FROM books WHERE LOWER(isbn) LIKE (LOWER(:query) || '%') ORDER BY title ASC LIMIT :per_page OFFSET :offset_num", {"query": query, "per_page": per_page, "offset_num": page}).fetchall()
+            "SELECT * FROM books WHERE LOWER(isbn) LIKE (LOWER(:query) || '%') ORDER BY title ASC LIMIT :per_page OFFSET :offset_num", {"query": query, "per_page": per_page, "offset_num": offset_num}).fetchall()
         return search_result
 
 
 @app.route("/book-search", methods=["GET", "POST"])
 def book_search():
-    if request.method == 'GET':
-        if session['logged_in'] == True:
+    if session['logged_in'] == False:
+        return redirect(url_for('index'))
+    else:
+        per_page = 20
+        page = 1
+        if request.method == 'GET':
             total_pages = 1
             # fetch 20 books
             books_initial = db.execute(
-                "SELECT * FROM books ORDER BY title ASC LIMIT 20").fetchall()
-            return render_template("book-search.html", username=session.get("username"), books=books_initial, total_pages=total_pages)
+                "SELECT * FROM books ORDER BY title ASC LIMIT :per_page", {"per_page": per_page}).fetchall()
+            return render_template("book-search.html", username=session.get("username"), books=books_initial, page=page, total_pages=total_pages)
         else:
-            return redirect(url_for('index'))
-    else:
-        if session['logged_in'] == True:
-            page = 1
             try:
                 query = request.form.get("title")
-                author = request.form.get("author")
-                isbn = request.form.get("isbn")
+                column = "title"
+                if query == None:
+                    query = request.form.get("author")
+                    column = "author"
+                if query == None:
+                    query = request.form.get("isbn")
+                    column = "isbn"
             except ValueError:
                 return render_template("error.html", message="Invalid search criteria")
-        if query != None:
-            return redirect(url_for('paginate', title="title", query=query, page=page))
+            return redirect(url_for('paginate', column=column, page=page, query=query))
 
 
-@app.route("/book-search/<title>/<query>/<int:page>")
-def paginate(title, query, page):
-    if session['logged_in'] == True:
-        print(title, query, page)
-        total_result = query_total_result("title", title)
+@app.route("/book-search/<column>/<int:page>/<query>")
+def paginate(column, page, query):
+    if session['logged_in'] == False:
+        return redirect(url_for('index'))
+    else:
+        per_page = 20
+        total_result = query_total_result(column, query)
+        search_result = query_books(column, query, page, per_page)
         total_pages = math.ceil((total_result / per_page))
-        search_result = query_books("title", title, page, per_page)
-        return render_template("unsuccess.html")
-    return render_template("unsuccess.html")
-    render_template("book-search.html", username=session.get("username"))
-
-       if len(search_result) == 0:
+        if len(search_result) == 0:
             return render_template("error.html", message="Sorry, there is no book in our inventory according to your search criteria")
         else:
-
-    render_template("book-search.html", username=session.get("username"),
-                    books=search_result, current_page=page, total_pages=total_pages)
-
-    #   if author != None:
-    #     search_result = query_books(author, author, page, per_page)
-    #     if len(search_result) == 0:
-    #         return render_template("error.html", message="Sorry, there is no book in our inventory according to your search criteria")
-    #     else:
-    #         return render_template("book-search.html", username=session.get("username"), books=search_result)
-    # if isbn != None:
-    #     search_result = query_books(author, author, page, per_page)
-    #     print(search_result)
-    #     if len(search_result) == 0:
-    #         return render_template("error.html", message="Sorry, there is no book in our inventory according to your search criteria")
-    #     else:
-    #         return render_template("book-search.html", username=session.get("username"), books=search_result)
-    # total_result = 0
-    # per_page = 20
-    # total_pages = 0
+            return render_template("book-search.html", username=session.get("username"),
+                                   books=search_result, page=page, total_pages=total_pages, column=column, query=query)
 
 
-@app.route("/book-search/<book_isbn>")
-def book(book_isbn):
-    if session['logged_in'] == True:
-        return render_template("book.html")
-    else:
+@app.route("/book/<isbn>")
+def goto_book_page(isbn):
+    if session['logged_in'] == False:
         return redirect(url_for('index'))
+    else:
+        book = db.execute(
+            "SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchone()
+        print(book)
+        print(book.title)
+        return render_template("book.html", username=session.get("username"), book=book)
+
+
+@app.route("/book/<isbn>/review", methods=["POST"])
+def review(isbn):
+    rating = request.form.get("rating")
+    comment = request.form.get("comment")
+    print(rating, comment)
+    db.exeecute("INSERT INTO reviews (rating, comment)")
+    return render_template("unsuccess")

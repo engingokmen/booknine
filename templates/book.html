@@ -1,7 +1,7 @@
 {% extends "layout.html" %} 
 
 {% block heading %} 
-  BOOK SEARCH 
+  BOOK DETAIL
   <div>
     {% if username %}
       <span class="mr-1">Hi, {{username}} </span>
@@ -10,7 +10,53 @@
   </div>
 {% endblock %} 
 
+{% block breadcrumb %}
+  <li class="breadcrumb-item active" aria-current="page">{{book.title}}</li>
+{% endblock %}
+
 {% block body %}
- <h2>BOOK DETAIL</h2>
+ <div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <h1 class="display-4">{{book.title}}</h1>
+    <p class="lead">Author: {{book.author}}</p>
+    <p class="lead">Publication year: {{book.year}}</p>
+    <p class="lead">ISBN: {{book.isbn}}</p>
+  </div>
+</div>
+<!-- make comment -->
+<form action="{{url_for('review', isbn=book.isbn)}}" method="POST">
+  <div class="form-group">
+    <label>{{username}}, you may leave your review:</label>
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <label class="input-group-text" for="inputGroupSelect01">Rating: </label>
+      </div>
+      <select class="custom-select" name="rating" id="inputGroupSelect01">
+        <option selected>Choose...</option>
+        <option value="1">One</option>
+        <option value="2">Two</option>
+        <option value="3">Three</option>
+        <option value="4">Four</option>
+        <option value="5">Five</option>
+      </select>
+    </div>
+    <textarea class="form-control" name="comment" id="comment" rows="3" placeholder="Opinion..."></textarea>
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-primary mt-2" type="submit">Send review</button>
+    </div>
+  </div>
+</form>
+<!-- list of reviews -->
+<label>List of reviews:</label>
+<ul class="list-group mb-5">
+  <li class="list-group-item">
+    <div class="d-flex w-100 justify-content-between">
+      <h5 class="mb-1">List group item heading</h5>
+      <small>3 days ago</small>
+    </div>
+    <p class="mb-1">Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit.</p>
+    <small>username</small>
+  </li>
+</ul>
 
 {% endblock %}
