@@ -1,4 +1,5 @@
 import os
+import requests
 
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify
 from flask_session import Session
@@ -24,7 +25,7 @@ Session(app)
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
-
+# code snippet against browser cache for development
 @app.context_processor
 def override_url_for():
     return dict(url_for=dated_url_for)
@@ -38,6 +39,7 @@ def dated_url_for(endpoint, **values):
                                      endpoint, filename)
             values['q'] = int(os.stat(file_path).st_mtime)
     return url_for(endpoint, **values)
+# end of code snippet against browser cache for development
 
 
 @app.route("/logout")
@@ -53,7 +55,6 @@ def index():
         session['logged_in'] = False
         session['username'] = ''
         return render_template("index.html", logged_in=session['logged_in'])
-
     username = session.get('username')
     return render_template("index.html", username=username, logged_in=session['logged_in'])
 
@@ -68,7 +69,7 @@ def register_user():
     username = request.form.get("username")
     password = request.form.get("password")
     if db.execute("SELECT * FROM users WHERE username = :username", {"username": username}).rowcount > 0:
-        return render_template("unsuccess.html")
+        return render_template("error.html", message="This username is not available")
     db.execute("INSERT INTO users (username, password) VALUES (:username, :password)",
                {"username": username, "password": password})
     db.commit()
@@ -81,8 +82,11 @@ def login():
     password = request.form.get("password")
     if db.execute("SELECT * FROM users WHERE username = :username AND password = :password",
                   {"username": username, "password": password}).rowcount == 1:
+        user = db.execute("SELECT * FROM users WHERE username = :username AND password = :password",
+                          {"username": username, "password": password}).fetchone()
         session['logged_in'] = True
-        session['username'] = username
+        session['user_id'] = user.id
+        session['username'] = user.username
         return redirect(url_for('book_search'))
     else:
         session['logged_in'] = False
@@ -169,17 +173,47 @@ def goto_book_page(isbn):
     if session['logged_in'] == False:
         return redirect(url_for('index'))
     else:
+        res = requests.get("https://www.goodreads.com/book/review_counts.json",
+                           params={"key": "T1GNWtVnkUqq4k4alkHA", "isbns": isbn}).json()
+        goodreads_average_rating = res['books'][0]['average_rating']
         book = db.execute(
             "SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchone()
-        print(book)
-        print(book.title)
-        return render_template("book.html", username=session.get("username"), book=book)
+        reviews = db.execute(
+            "SELECT * FROM reviews WHERE book_isbn = :book_isbn", {"book_isbn": isbn}).fetchall()
+        return render_template("book.html", username=session.get("username"), book=book, reviews=reviews, goodreads_average_rating=goodreads_average_rating)
 
 
 @app.route("/book/<isbn>/review", methods=["POST"])
 def review(isbn):
     rating = request.form.get("rating")
     comment = request.form.get("comment")
-    print(rating, comment)
-    db.exeecute("INSERT INTO reviews (rating, comment)")
-    return render_template("unsuccess")
+    if db.execute("SELECT * FROM reviews WHERE book_isbn = :book_isbn AND user_id = :user_id",
+                  {"book_isbn": isbn, "user_id": session.get("user_id")}).rowcount >= 1:
+        return render_template("error.html", message="You may review only one time per book")
+    db.execute(
+        "INSERT INTO reviews (rating, comment, user_id, book_isbn) VALUES (:rating, :comment, :user_id, :book_isbn)", {"rating": rating, "comment": comment, "user_id": session.get("user_id"), "book_isbn": isbn})
+    db.commit()
+    return redirect(url_for('goto_book_page', isbn=isbn))
+
+
+@app.route("/api/<isbn>")
+def api_isbn(isbn):
+    book = db.execute(
+        "SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchone()
+    if book is None:
+        return jsonify({"error": "Book is not in our inventory"}), 404
+    review_count = db.execute(
+        "SELECT * FROM reviews WHERE book_isbn = :book_isbn", {"book_isbn": isbn}).rowcount
+    if review_count > 0:
+        average_score_object = db.execute("SELECT AVG (rating) FROM reviews WHERE book_isbn = :book_isbn", {
+            "book_isbn": isbn}).fetchone()
+    for row in average_score_object:
+        average_score = float(row)
+    return jsonify({
+        "title": book.title,
+        "author": book.author,
+        "year": book.year,
+        "isbn": book.isbn,
+        "review_count": review_count,
+        "average_score": average_score
+    })

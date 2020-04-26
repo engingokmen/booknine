@@ -11,6 +11,7 @@
 {% endblock %} 
 
 {% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/book-search">Book search</a></li>
   <li class="breadcrumb-item active" aria-current="page">{{book.title}}</li>
 {% endblock %}
 
@@ -21,6 +22,7 @@
     <p class="lead">Author: {{book.author}}</p>
     <p class="lead">Publication year: {{book.year}}</p>
     <p class="lead">ISBN: {{book.isbn}}</p>
+    <p class="lead">goodreads average rating: {{goodreads_average_rating}}</p>
   </div>
 </div>
 <!-- make comment -->
@@ -49,14 +51,15 @@
 <!-- list of reviews -->
 <label>List of reviews:</label>
 <ul class="list-group mb-5">
+  {% for review in reviews %}
   <li class="list-group-item">
-    <div class="d-flex w-100 justify-content-between">
-      <h5 class="mb-1">List group item heading</h5>
-      <small>3 days ago</small>
+    <div class="d-flex w-100 justify-content-end">
+      <small>Rating: {{review.rating}}</small>
     </div>
-    <p class="mb-1">Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit.</p>
-    <small>username</small>
+    <p class="mb-1">{{review.comment}}</p>
+    <!-- <small></small> -->
   </li>
+  {% endfor%}
 </ul>
 
 {% endblock %}

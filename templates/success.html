@@ -1,0 +1,12 @@
+{% extends "layout.html" %} 
+
+{% block heading %} SUCCESS {% endblock %} 
+
+{% block body %}
+
+<p>Registered successfully! You may login now</p>
+
+<a href="{{url_for('index')}}">Login</a>
+
+
+{% endblock %}

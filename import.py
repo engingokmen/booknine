@@ -15,14 +15,7 @@ if not os.getenv("DATABASE_URL"):
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
-
-db.execute(
-    "CREATE TABLE users (id SERIAL PRIMARY KEY, username VARCHAR NOT NULL, password VARCHAR NOT NULL)")
-
-db.execute(
-    "CREATE TABLE reviews (id SERIAL PRIMARY KEY, rating SMALLINT NOT NULL, comment VARCHAR(600), user_id INTEGER REFERENCES users, book_id INTEGER REFERENCES books )")
-
-db.execute("CREATE TABLE books (id SERIAL PRIMARY KEY, isbn VARCHAR NOT NULL, title VARCHAR NOT NULL, author VARCHAR NOT NULL, year INTEGER, review_id INTEGER REFERENCES reviews)")
+db.execute("CREATE TABLE books (isbn VARCHAR(16) PRIMARY KEY, title VARCHAR NOT NULL, author VARCHAR NOT NULL, year INTEGER)")
 f = open("books.csv")
 reader = csv.reader(f)
 for isbn, title, author, year in reader:  # loop gives each column a name
@@ -31,3 +24,13 @@ for isbn, title, author, year in reader:  # loop gives each column a name
     print(
         f"Added book: {isbn}, {title}, {author}, {year} ")
 db.commit()  # transactions are assumed, so close the transaction finished
+
+db.execute(
+    "CREATE TABLE users (id SERIAL PRIMARY KEY, username VARCHAR NOT NULL, password VARCHAR NOT NULL)")
+
+db.commit()
+
+db.execute(
+    "CREATE TABLE reviews (id SERIAL PRIMARY KEY, rating SMALLINT NOT NULL, comment VARCHAR(600), user_id INTEGER REFERENCES users, book_isbn VARCHAR(16) REFERENCES books)")
+
+db.commit()
