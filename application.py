@@ -7,8 +7,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import math
 
-os.environ['DATABASE_URL'] = "postgres://dkyqpiphkaurxc:925de28539e0d693231bc829c7bae75e384f70e6ca737ce6f42416d280b50f82@ec2-54-217-204-34.eu-west-1.compute.amazonaws.com:5432/d3nlsgf4egup6j"
-KEY = "T1GNWtVnkUqq4k4alkHA"
+os.environ['DATABASE_URL'] = "postgres://cirmwacpuuhlha:e98f033dd24351340531cdb496cd6ef069b6a2ecff3f52fdbefbdcd50f95fc19@ec2-54-247-122-209.eu-west-1.compute.amazonaws.com:5432/d18fs835ggnl48"
+KEY = "e98f033dd24351340531cdb496cd6ef069b6a2ecff3f52fdbefbdcd50f95fc19"
 
 app = Flask(__name__)
 
